@@ -1,6 +1,6 @@
 Package: letsRept
 Title: An Interface to the Reptile Database
-Version: 1.0.0
+Version: 1.0.1
 Authors@R: 
     c(
     person(given="João Paulo dos Santos",
@@ -29,11 +29,11 @@ Suggests: knitr, rmarkdown, testthat (>= 3.0.0)
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 NeedsCompilation: no
-Packaged: 2025-08-18 23:49:05 UTC; joaosvalencar
+Packaged: 2025-08-23 19:49:55 UTC; joaosvalencar
 Author: João Paulo dos Santos Vieira-Alencar [aut, cre] (ORCID:
     <https://orcid.org/0000-0001-6894-6773>),
   Christoph Liedtke [aut] (ORCID:
     <https://orcid.org/0000-0002-6221-8043>)
 Maintainer: João Paulo dos Santos Vieira-Alencar <joaopaulo.valencar@gmail.com>
 Repository: CRAN
-Date/Publication: 2025-08-22 17:40:09 UTC
+Date/Publication: 2025-08-23 21:50:02 UTC

@@ -38,13 +38,10 @@ match_taxon <- function(taxa_vector, rank_list) {
 #' @keywords internal
 #' @noRd
 safeParallel <- function(data, FUN, cores = 1, showProgress = TRUE) {
-  if (.Platform$OS.type == "unix") {
-    if (showProgress && requireNamespace("pbmcapply", quietly = TRUE)) {
-      pbmcapply::pbmclapply(data, FUN, mc.cores = cores)
-    } else {
-      parallel::mclapply(data, FUN, mc.cores = cores)
-    }
-  } else {
+is_mac <- Sys.info()["sysname"] == "Darwin"
+
+if (.Platform$OS.type == "unix") {
+  if (is_mac || cores > 1) { # macOS is unsafe with fork
     cl <- parallel::makeCluster(cores)
     on.exit(parallel::stopCluster(cl))
     if (showProgress && requireNamespace("pbapply", quietly = TRUE)) {
@@ -52,7 +49,22 @@ safeParallel <- function(data, FUN, cores = 1, showProgress = TRUE) {
     } else {
       parallel::parLapply(cl, data, FUN)
     }
+  } else { # safe to use mclapply (Linux)
+    if (showProgress && requireNamespace("pbmcapply", quietly = TRUE)) {
+      pbmcapply::pbmclapply(data, FUN, mc.cores = cores)
+    } else {
+      parallel::mclapply(data, FUN, mc.cores = cores)
+    }
   }
+} else { # Windows
+  cl <- parallel::makeCluster(cores)
+  on.exit(parallel::stopCluster(cl))
+  if (showProgress && requireNamespace("pbapply", quietly = TRUE)) {
+    pbapply::pblapply(data, FUN, cl = cl)
+  } else {
+    parallel::parLapply(cl, data, FUN)
+  }
+}
 }
 
 # higherSampleParallel ----------------------------------------------------
@@ -511,6 +523,7 @@ getSynonyms <- function(x, checkpoint = NULL, resume=FALSE, backup_file = NULL, 
 #' @param pubDate An optional integer year (e.g., 2020) to compare against taxon publication years.
 #' Species published from this year onward may indicate a recent split.
 #' @param verbose Logical; if \code{TRUE}, messages will be printed when an error occurs. Default is \code{TRUE}.
+#' @param includeAll Logical; If \code{TRUE}, include all species described since `pubDate` regardless of if it is already included in the queried species list. Default is \code{FALSE}
 #'
 #' @return A data frame with three columns:
 #' \itemize{
@@ -523,7 +536,16 @@ getSynonyms <- function(x, checkpoint = NULL, resume=FALSE, backup_file = NULL, 
 #' @noRd
 splitCheck <- function(spp, pubDate = NULL, verbose = TRUE, includeAll = includeAll, x) {
   tryCatch({
-    link <- reptAdvancedSearch(synonym = spp, verbose = verbose)
+    parts <- strsplit(spp, " ")[[1]]
+    
+    exact_flag <- length(parts) == 2 && tolower(parts[1]) == tolower(parts[2])
+   
+     if (exact_flag) {
+      link <- reptAdvancedSearch(synonym = spp, verbose = verbose, exact = TRUE)
+    } else {
+      link <- reptAdvancedSearch(synonym = spp, verbose = verbose)
+    }
+    
     
     # Character link: standard HTML parsing
     if (is.character(link) && grepl("^https:", link)) {

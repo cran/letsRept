@@ -1,5 +1,9 @@
-# letsRept
+# letsRept🦎 🐍 🐊 🐢
 
+<!-- badges: start -->
+[![CRAN status](https://www.r-pkg.org/badges/version/letsRept)](https://CRAN.R-project.org/package=letsRept)
+<!-- badges: end -->
+  
 ### **An Interface to the Reptile Database**
 
 This package was developed to facilitate the processes of reptile nomenclature update based on a search for species synonyms according to [The Reptile Databse](https://reptile-database.reptarium.cz) website (Uetz et al., 2025).
@@ -47,9 +51,9 @@ browseVignettes("letsRept")
 - [x] &nbsp; Implement "up_to_date" check (`reptSplitCheck`)
 - [x] &nbsp; Implement Reference sampling (df with links)
 - [x] &nbsp; Implement adapted version of `AmphiNom::asw_stats()` (Liedtke, 2018)
-- [ ] $nbsp; Stable version 1.0.0 CRAN submission (August 18th, 2025)
-- [ ] $nbsp; Stable version 1.0.0 CRAN release
-- [ ] &nbsp; Paper submission (ongoing)
+- [x] &nbsp; Stable version 1.0.0 CRAN submission (August 18th, 2025)
+- [x] &nbsp; Stable version 1.0.0 CRAN release (August 22nd, 2025)
+- [x] &nbsp; Paper submission (August 18th, 2025)
 
 ### **How to Cite**
 
