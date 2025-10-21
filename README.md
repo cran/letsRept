@@ -1,14 +1,15 @@
-# letsRept🦎 🐍 🐊 🐢
+# *letsRept*🦎 🐍 🐊 🐢
 
 <!-- badges: start -->
 [![CRAN status](https://www.r-pkg.org/badges/version/letsRept)](https://CRAN.R-project.org/package=letsRept)
+[![pkgdown](https://img.shields.io/badge/pkgdown-letsRept-blue)](https://joao-svalencar.github.io/letsRept/)
 <!-- badges: end -->
   
 ### **An Interface to the Reptile Database**
 
-This package was developed to facilitate the processes of reptile nomenclature update based on a search for species synonyms according to [The Reptile Databse](https://reptile-database.reptarium.cz) website (Uetz et al., 2025).
+This package was developed to facilitate the processes of reptile nomenclature update based on the [Reptile Database](https://reptile-database.reptarium.cz) website (Uetz et al., 2025).
 
-Currently, the package access many species information from The Reptile Database using R interface.
+Currently, the package access many species information from the Reptile Database using R interface.
 
 I hope it to be useful, to people trying to match databases from different sources (IUCN, species traits database, etc), or trying to get summaries from a given higher taxa or region (e.g.: Snakes from Brazil). But it can also just print single species information directly in R.
 
@@ -16,7 +17,7 @@ Any feedback, suggestion or request are welcome!
 
 ### **Download**
 
-To install the stable version of this package user must run:
+To install the development version run:
 
 ```{.r}
 # install.packages("devtools")
@@ -32,7 +33,7 @@ browseVignettes("letsRept")
 
 ### **Internal datasets**
 
-- The package counts with a full list of current valid species (`allReptiles` - 12,440 species) with their respective higher taxa information (updated to 23th of May, 2025);
+- The package counts with a full list of current valid species (`allReptiles` - 12,500 species) with their respective higher taxa information (updated to 15th of September, 2025);
 
 - A dataset with all unique synonyms for each current valid species (`allSynonyms` - 53,159 entries - updated to 23th of May, 2025); 
 
@@ -40,20 +41,14 @@ browseVignettes("letsRept")
 
 ### **Next steps**
 
-- [x] &nbsp; Implement `reptAdvancedSearch` link testing and result summary
-- [x] &nbsp; Implement `reptSynonym` batch sampling and tryCatch() mechanism
-- [x] &nbsp; `reptSpecies()` with parallel sampling
-- [x] &nbsp; `reptSynonyms()` with parallel sampling
-- [x] &nbsp; CRAN submission (June 14th, 2025)
-- [x] &nbsp; CRAN reviewed submission (June 18th, 2025)
-- [x] &nbsp; CRAN release 0.1.0 (June 23rd, 2025)
-- [x] &nbsp; `reptSync` upgrade
-- [x] &nbsp; Implement "up_to_date" check (`reptSplitCheck`)
-- [x] &nbsp; Implement Reference sampling (df with links)
-- [x] &nbsp; Implement adapted version of `AmphiNom::asw_stats()` (Liedtke, 2018)
-- [x] &nbsp; Stable version 1.0.0 CRAN submission (August 18th, 2025)
-- [x] &nbsp; Stable version 1.0.0 CRAN release (August 22nd, 2025)
+- [x] &nbsp; Stable version 1.0.1 CRAN submission (August 18th, 2025)
+- [x] &nbsp; Stable version 1.0.1 CRAN release (August 22nd, 2025)
 - [x] &nbsp; Paper submission (August 18th, 2025)
+- [x] &nbsp; Paper publication (October 20th, 2025)
+- [x] &nbsp; update `allReptiles`
+- [ ] &nbsp; update `allSynonyms`
+- [ ] &nbsp; Package webpage development
+- [ ] &nbsp; API development and package API compatibility
 
 ### **How to Cite**
 
@@ -65,13 +60,13 @@ citation("letsRept")
 
 ⚠️ Important note:
 
-`letsRept` retrieves valuable taxonomic and synonymy data directly from [The Reptile Database](http://www.reptile-database.org)..
+`letsRept` retrieves valuable taxonomic and synonymy data directly from the [Reptile Database](http://www.reptile-database.org).
 When citing this package, please also cite the original database as a data source.
 
 ### **References**
-Liedtke, H. C. (2018). AmphiNom: an amphibian systematic tool. Systematics and Biodiversity, 17(1) 1-6. https://doi.org/10.1080/14772000.2018.1518935
+Uetz, P., Freed, P, Aguilar, R., Reyes, F., Kudera, J. & Hošek, J. (eds.) (2025). The Reptile Database. http://www.reptile-database.org
 
-Uetz, P., Freed, P, Aguilar, R., Reyes, F., Kudera, J. & Hošek, J. (eds.) (2025) The Reptile Database. http://www.reptile-database.org
+Vieira-Alencar, J.P.S., Liedtke, H.C., Meire, S., Roll, U., Uetz, P. & Nori, J. (2025). letsRept: An R package to access the Global Reptile Database and facilitate taxonomic harmonization.  Biodiversity Informatics, 19, 120-143. https://doi.org/10.17161/bi.v19i.24329
 
 ### **Author:**
 

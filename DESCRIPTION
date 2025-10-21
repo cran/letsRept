@@ -1,6 +1,6 @@
 Package: letsRept
 Title: An Interface to the Reptile Database
-Version: 1.0.1
+Version: 1.1.0
 Authors@R: 
     c(
     person(given="João Paulo dos Santos",
@@ -14,7 +14,7 @@ Authors@R:
            role = c("aut"),
            comment = c(ORCID = "0000-0002-6221-8043"))
            )
-URL: https://github.com/joao-svalencar/letsRept
+URL: https://joao-svalencar.github.io/letsRept/
 BugReports: https://github.com/joao-svalencar/letsRept/issues
 Description: Provides tools to retrieve and summarize taxonomic information and synonymy data for reptile species using data scraped from The Reptile Database website (<https://reptile-database.reptarium.cz/>). Outputs include clean and structured data frames useful for ecological, evolutionary, and conservation research.
 License: MIT + file LICENSE
@@ -29,11 +29,11 @@ Suggests: knitr, rmarkdown, testthat (>= 3.0.0)
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 NeedsCompilation: no
-Packaged: 2025-08-23 19:49:55 UTC; joaosvalencar
+Packaged: 2025-10-20 23:10:03 UTC; joaosvalencar
 Author: João Paulo dos Santos Vieira-Alencar [aut, cre] (ORCID:
     <https://orcid.org/0000-0001-6894-6773>),
   Christoph Liedtke [aut] (ORCID:
     <https://orcid.org/0000-0002-6221-8043>)
 Maintainer: João Paulo dos Santos Vieira-Alencar <joaopaulo.valencar@gmail.com>
 Repository: CRAN
-Date/Publication: 2025-08-23 21:50:02 UTC
+Date/Publication: 2025-10-21 09:10:40 UTC

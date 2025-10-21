@@ -5,7 +5,7 @@
 #'
 #' @param x A character vector of taxon names to be matched (e.g., species lists, phylogenetic tip labels, or trait table entries).
 #' @param solveAmbiguity Logical. If \code{TRUE}, attempts to resolve ambiguous names by retrieving all possible valid species to which the query may refer. Default is \code{TRUE}.
-#' @param cores Integer. Number of CPU cores to use for parallel processing. Default is half of available cores (min = 1).
+#' @param cores Integer. Number of CPU cores to use for parallel processing. Default is \code{cores = 1}.
 #' @param showProgress Logical. If \code{TRUE}, displays progress updates during processing. Default is \code{TRUE}.
 #' @param getLink Logical. If \code{TRUE}, retrieves searched species URLs. Defaults if \code{FALSE}.
 #'
@@ -13,7 +13,7 @@
 #' \itemize{
 #'   \item \code{query}: the original input names.
 #'   \item \code{RDB}: the best-matching valid names according to The Reptile Database.
-#'   \item \code{status}: a status label indicating the result of the match (\code{"up_to_date"}, \code{"updated"}, \code{"ambiguous"}, or \code{"not_found"}).
+#'   \item \code{status}: a status label indicating the result of the match (\code{"up_to_date"}, \code{"updated"}, \code{"updated_typo"}, \code{"ambiguous"}, \code{"merge"}, or \code{"not_found"}).
 #'   \item \code{url}: Optional, if getLink = TRUE returns the URL of the species page retrieved for each match, or a list of possible matches if ambiguous.
 #' }
 #'
@@ -39,7 +39,7 @@
 
 reptSync <- function(x, 
                      solveAmbiguity = TRUE,
-                     cores = max(1L, floor(parallel::detectCores() / 2)),
+                     cores = 1,
                      showProgress = TRUE,
                      getLink = FALSE) {
   
@@ -52,7 +52,7 @@ reptSync <- function(x,
       status <- if (species_name == RDB) "up_to_date" else "updated"
       url <- result$url
     } else if (is.character(result) && grepl("^https:", result)) {
-      search <- rvest::read_html(result)
+      search <-safeRequest(result)
       title_node <- rvest::html_element(search, "h1")
       title_text <- rvest::html_text(title_node, trim = TRUE)
       
@@ -69,9 +69,21 @@ reptSync <- function(x,
       status <- "ambiguous"
       url <- result
     } else {
+      fuzzy <- agrep(species_name, letsRept::allReptiles$species, max.distance = 0.1, value = TRUE)
+      if(length(fuzzy) == 0){
       RDB <- result
       status <- "not_found"
       url <- result
+      }else if(length(fuzzy)==1){
+        RDB <- fuzzy
+        status <- "updated_typo"
+        url <- result
+      }else{
+        RDB <- paste(fuzzy, collapse = "; ")
+        status <- "fuzzy_ambiguous"
+        url <- result
+      }
+      
     }
     data.frame(query = species_name, RDB = RDB, status = status, url = url, stringsAsFactors = FALSE)
   }
@@ -118,7 +130,7 @@ reptSync <- function(x,
         df$status[df$query == ambiguity_df$query[i]] <- ambiguity_df$status[i]
       }
     }
-    df$status[df$RDB %in% names(which(table(df$RDB)[!names(table(df$RDB)) %in% c("ambiguous", "not_found")] >=2))] <- "synonymization"
+    df$status[df$RDB %in% names(which(table(df$RDB)[!names(table(df$RDB)) %in% c("ambiguous", "not_found")] >=2))] <- "merge"
     if(getLink){
       return(df)  
     }else{
@@ -126,7 +138,7 @@ reptSync <- function(x,
       return(df)  
     }
   }else{
-    df$status[df$RDB %in% names(which(table(df$RDB)[!names(table(df$RDB)) %in% c("ambiguous", "not_found")] >=2))] <- "synonymization"
+    df$status[df$RDB %in% names(which(table(df$RDB)[!names(table(df$RDB)) %in% c("ambiguous", "not_found")] >=2))] <- "merge"
     if(getLink){
       return(df)  
     }else{

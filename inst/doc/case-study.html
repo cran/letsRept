@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="João Paulo dos Santos Vieira-Alencar" />
+
+<meta name="date" content="2025-10-20" />
+
+<title>Case Study: Using letsRept to harmonize reptile species nomenclature</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Case Study: Using letsRept to harmonize
+reptile species nomenclature</h1>
+<h4 class="author">João Paulo dos Santos Vieira-Alencar</h4>
+<h4 class="date">2025-10-20</h4>
+
+
+
+<div id="updating-nomenclature-with-letsrept" class="section level1">
+<h1>Updating nomenclature with <em>letsRept</em></h1>
+<p>This article is dedicated to simulate a follow up, step-by-step of
+the case study presented in <a href="https://journals.ku.edu/jbi/article/view/24329">Vieira-Alencar et
+al. (2025)</a>.</p>
+<p>The data used in the examples are referenced and publicly available.
+A full repository dedicated for the paper reproducibility is accessible
+via: <a href="https://doi.org/10.5281/zenodo.16895979" class="uri">https://doi.org/10.5281/zenodo.16895979</a>. Download the
+repo and execute the .Rproj file to keep the same code structure as
+shown herein.</p>
+<p>I recommend installing the development version directly from GitHub,
+but a stable version is available on CRAN. Package <code>here</code> and
+<code>parallel</code> are suggested to follow this tutorial.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="co">#devtools::install_github(&quot;joao-svalencar/letsRept&quot;, ref=&quot;main&quot;, force=TRUE)</span></span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a><span class="co">#install.packages(&quot;here&quot;)</span></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="co">#install.packages(&quot;parallel&quot;)</span></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="fu">library</span>(letsRept)</span></code></pre></div>
+<pre><code>## letsRept 1.1.0 loaded 🦎 🐍 🐊 🐢
+## Please cite both letsRept and The Reptile Database when using this package.
+## Run citation(&quot;letsRept&quot;) for details.</code></pre>
+<p>If you downloaded the repository and executed the .Rproj, then to
+load the example dataset from <a href="https://doi.org/10.2994/SAJH-D-19-00120.1">Nogueira et
+al. (2019)</a> run:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="co"># load Nogueira et al., (2019) Supp. Mat. Table S3 (georeferenced type localities)</span></span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>atlas <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">&quot;data&quot;</span>, <span class="st">&quot;atlas.csv&quot;</span>))</span></code></pre></div>
+<p>Alternatively, the same dataset is available within the package and
+to load it run:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>atlas <span class="ot">&lt;-</span> letsRept<span class="sc">::</span>br_snakes_atlas</span></code></pre></div>
+<p>In the manuscript, to introduce readers to some of the main functions
+of <em>letsRept</em> we showed an example of how to subset the Reptile
+Database to get taxonomic information from a given group, in a given
+region.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>link <span class="ot">&lt;-</span> <span class="fu">reptAdvancedSearch</span>(<span class="at">location =</span> <span class="st">&quot;Brazil&quot;</span>, <span class="at">higher =</span> <span class="st">&quot;snakes&quot;</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>snakes_br <span class="ot">&lt;-</span> <span class="fu">reptSpecies</span>(link, <span class="at">taxonomicInfo =</span> <span class="cn">TRUE</span>, <span class="at">cores =</span> (parallel<span class="sc">::</span><span class="fu">detectCores</span>()<span class="sc">-</span><span class="dv">1</span>))</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="fu">head</span>(snakes_br)</span></code></pre></div>
+<p>But for nomenclature update using the internal data
+<code>allReptiles</code> you can just run <code>reptCompare</code>
+without a second argument:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>compare <span class="ot">&lt;-</span> <span class="fu">reptCompare</span>(atlas<span class="sc">$</span>species)</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a><span class="fu">table</span>(compare<span class="sc">$</span>status)</span></code></pre></div>
+<div id="to-review-unmatched-nomenclature" class="section level2">
+<h2>To review unmatched nomenclature:</h2>
+<p>The basic update that most other tools provide will just try to
+detect the current name for unmatched entries. To start with these cases
+we subset the database filtering only for the species that doesn’t match
+the Reptile Database nomenclature:</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>review <span class="ot">&lt;-</span> <span class="fu">reptCompare</span>(atlas<span class="sc">$</span>species, snakes_br<span class="sc">$</span>species, <span class="at">filter =</span> <span class="st">&quot;review&quot;</span>) <span class="co">#38 unmatched names </span></span></code></pre></div>
+<p>Now, to verify the suggestions of current nomenclature we parse these
+names to <code>reptSync</code>:</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>sync <span class="ot">&lt;-</span> <span class="fu">reptSync</span>(review, <span class="at">solveAmbiguity =</span> <span class="cn">TRUE</span>, <span class="at">cores =</span> (parallel<span class="sc">::</span><span class="fu">detectCores</span>()<span class="sc">-</span><span class="dv">1</span>))</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>sync</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="fu">table</span>(sync<span class="sc">$</span>status)</span></code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="center">ambiguous</th>
+<th align="center">merge</th>
+<th align="center">updated</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">3</td>
+<td align="center">2</td>
+<td align="center">33</td>
+</tr>
+</tbody>
+</table>
+<p>Alright, now we know that most species names could be unambiguously
+updated but we do have 3 cases of ambiguous nomenclature and 2 cases of
+species that should me merged, possibly because of species lumping.
+Let’s see who they are in a tidy way:</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">reptTidySyn</span>(sync, <span class="at">filter =</span> <span class="fu">c</span>(<span class="st">&quot;merge&quot;</span>, <span class="st">&quot;ambiguous&quot;</span>))</span></code></pre></div>
+<p>For <em>Corallus hortulanus</em> two options emerged, <em>Corallus
+cookii</em> and <em>Corallus hortulana</em>.</p>
+<p>Although it can be quite straightforward for some users
+(e.g. familiar with the studied species), to be able to decide which
+name is the most appropriate to use in our study we might need to check
+extra information.</p>
+<p>Let’s give a look in their accounts:</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a><span class="fu">reptSearch</span>(<span class="st">&quot;Corallus cookii&quot;</span>)</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a><span class="fu">reptSearch</span>(<span class="st">&quot;Corallus hortulana&quot;</span>)</span></code></pre></div>
+<p>Carefully evaluating the species synonyms entry we can verify that
+“<em>Corallus hortulanus</em>” is a true synonym only of <em>Corallus
+hortulana}</em>. In <em>Corallus cookii</em> account the name
+<em>Corallus hortulanus</em> is considered only a chresonym (identified
+with an emdash between the name and the reference). Besides that,
+<em>Corallus cookii</em> has never been recorded in Brazil (see
+Distribution). Therefore the most likely correct name for <em>Corallus
+hortulanus</em> is now <em>Corallus hortulana</em>. Users can manually
+change the nomenclature in their datasets or can optionally substitute
+the name in the <code>reptSync</code> output:</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a>sync<span class="sc">$</span>RDB[syncl<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Corallus hortulanus&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Corallus hortulana&quot;</span> <span class="co">#choosing name to keep from RDB</span></span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a>sync<span class="sc">$</span>status[sync<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Corallus hortulanus&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;updated&quot;</span> <span class="co">#changing the name status</span></span></code></pre></div>
+<p>A similar rationale can be used for the remaining species.</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a><span class="fu">reptSearch</span>(<span class="st">&quot;Adelphostigma occipitalis&quot;</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="fu">reptSearch</span>(<span class="st">&quot;Adelphostigma quadriocellata&quot;</span>)</span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="fu">reptSearch</span>(<span class="st">&quot;Eutrachelophis papilio&quot;</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a></span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>sync<span class="sc">$</span>RDB[sync<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Taeniophallus occipitalis&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Adelphostigma occipitalis&quot;</span></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a>sync<span class="sc">$</span>status[sync<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Taeniophallus occipitalis&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;updated&quot;</span></span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="fu">reptSearch</span>(<span class="st">&quot;Tachymenis ocellata&quot;</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="fu">reptSearch</span>(<span class="st">&quot;Tachymenis trigonatus&quot;</span>)</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>sync<span class="sc">$</span>RDB[sync<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Tomodon ocellatus&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Tachymenis ocellata&quot;</span></span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>sync<span class="sc">$</span>status[sync<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Tomodon ocellatus&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;updated&quot;</span></span></code></pre></div>
+<p>With all done in object <code>sync</code> we only have to fix the
+entry of the <em>Liotyplhops</em> species, but let’s wait for the next
+steps.</p>
+</div>
+<div id="to-check-for-taxonomic-splitting" class="section level2">
+<h2>To check for taxonomic splitting:</h2>
+<p>One of the main functions in <em>letsRept</em> is
+<code>reptSplitCheck</code>. This function allows to check the species
+with matched nomenclature for the possibility of being split after a
+user defined date. If no date is provided, the function will use
+<code>1758</code> as a reference and every single species described from
+which the queried names are synonyms/chresonyms will show up.</p>
+<p>But attention here. Run:</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" tabindex="-1"></a><span class="co">#example 1</span></span>
+<span id="cb14-2"><a href="#cb14-2" tabindex="-1"></a><span class="fu">reptTidySyn</span>(<span class="fu">reptSplitCheck</span>(<span class="st">&quot;Boa constrictor&quot;</span>))</span></code></pre></div>
+<p>Then run:</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a><span class="co">#example 2</span></span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a><span class="fu">reptTidySyn</span>(<span class="fu">reptSplitCheck</span>(<span class="st">&quot;Boa constrictor&quot;</span>, <span class="at">exact =</span> <span class="cn">TRUE</span>))</span></code></pre></div>
+<p>Function <code>reptSplitCheck</code> parses the binomials provided to
+<code>reptAdvancedSearch(synonyms = binomial)</code>. The algorithm of
+Reptile Database allows users to query exact searches by using quotes
+around the names provided. When not between quotes, the search will
+return species with anything from the synonym/chresonym section that
+matches “Boa” or “constrictor”. That is why <em>Acrantophis
+dumerili</em>, <em>Malayopython reticulatus</em> and <em>Simalia
+amethistina</em> are returned from example chunk #1 and not from #2. It
+matters because some newly described species might have been associated
+with a valid name with, for example a <code>cf.</code> or
+<code>aff.</code> notation and will not show up if a exact match is
+queried:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="co">#example 3</span></span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a><span class="fu">reptTidySyn</span>(<span class="fu">reptSplitCheck</span>(<span class="st">&quot;Tantilla melanocephala&quot;</span>, <span class="at">exact =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a></span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a><span class="co">#example 4</span></span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a><span class="fu">reptTidySyn</span>(<span class="fu">reptSplitCheck</span>(<span class="st">&quot;Tantilla melanocephala&quot;</span>))</span></code></pre></div>
+<p>As we knew that some localities reported for <em>Tantilla
+melanocephala</em> in <a href="https://doi.org/10.2994/SAJH-D-19-00120.1">Nogueira et
+al. (2019)</a> are now attributed to <em>Tantilla selmae</em>, we knew
+that using and exact match would exclude the latter from our output. At
+the same time, without the exact match some species not related to our
+query might show up (example #1). To avoid missing other similar (but
+unknown) possibilities I decided to proceed without the exact match
+filter. This decision has to be made considering the balance of checking
+all split possibilities (even not meaninful ones) and taxonomic
+exactness. With <em>letsRept</em> it is not too hard to check all
+possibilities in most cases.</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a>matched <span class="ot">&lt;-</span> <span class="fu">reptCompare</span>(atlas<span class="sc">$</span>species, snakes_br, <span class="at">filter =</span> <span class="fu">c</span>(<span class="st">&quot;matched&quot;</span>, <span class="st">&quot;absent&quot;</span>)) <span class="co">#372 unmatched names + 1 absent</span></span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a></span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>split_check <span class="ot">&lt;-</span> <span class="fu">reptSplitCheck</span>(matched, <span class="at">pubDate =</span> <span class="dv">2019</span>, <span class="at">cores =</span> (parallel<span class="sc">::</span><span class="fu">detectCores</span>()<span class="sc">-</span><span class="dv">1</span>))</span></code></pre></div>
+<p>Sometimes, if the internet connection is slow or if the Reptile
+Database server does not respond, a queried species might not be
+retrieved and it will receive the status “failed”, so it is important to
+check all statuses before continuing:</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="fu">table</span>(split_check<span class="sc">$</span>status)</span></code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="center">check_split</th>
+<th align="center">up_to_date</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">19</td>
+<td align="center">354</td>
+</tr>
+</tbody>
+</table>
+<p>If your <code>split_check</code> object has any “failed” species you
+might want to query them again. You can filter them out and re-run the
+query using:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a>split_failed <span class="ot">&lt;-</span> <span class="fu">reptSplitCheck</span>(split_check<span class="sc">$</span>query[split_check<span class="sc">$</span>status<span class="sc">==</span><span class="st">&quot;failed&quot;</span>], <span class="at">pubDate =</span> <span class="dv">2019</span>, <span class="at">cores =</span> <span class="dv">9</span>) <span class="co">#select and run</span></span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>split_check <span class="ot">&lt;-</span> split_check[<span class="sc">!</span>split_check<span class="sc">$</span>status<span class="sc">==</span><span class="st">&quot;failed&quot;</span>,] <span class="co">#remove the failed</span></span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a>split_check <span class="ot">&lt;-</span> <span class="fu">rbind</span>(split_check, split_failed) <span class="co">#add the species previously failed</span></span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a>split_check <span class="ot">&lt;-</span> split_check[<span class="fu">order</span>(split_check<span class="sc">$</span>query),] <span class="co">#Optional: reorder species names</span></span></code></pre></div>
+<p>Using <code>reptTidySyn</code> again to verify the species of
+interest:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a><span class="fu">reptTidySyn</span>(split_check, <span class="at">filter =</span> <span class="fu">c</span>(<span class="st">&quot;check_split&quot;</span>))</span></code></pre></div>
+<p>An approach to the applied to “review” species can be used here:
+“search”, “decide”, “update”</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" tabindex="-1"></a><span class="co">#Atractus</span></span>
+<span id="cb21-2"><a href="#cb21-2" tabindex="-1"></a><span class="fu">reptSearch</span>(<span class="st">&quot;Atractus akerios&quot;</span>)</span>
+<span id="cb21-3"><a href="#cb21-3" tabindex="-1"></a><span class="fu">reptSearch</span>(<span class="st">&quot;Atractus nawa&quot;</span>)</span>
+<span id="cb21-4"><a href="#cb21-4" tabindex="-1"></a><span class="fu">reptSearch</span>(<span class="st">&quot;Atractus ukupacha&quot;</span>)</span></code></pre></div>
+<p>For the purpose of simplicity, consider that we have decided how to
+split/get the data and want to add <em>A. akerios</em> and <em>A.
+nawa</em> to our species list and that we won’t add <em>Atractus
+ukupacha</em> because it is not known to occur in Brazil:</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a>split_check<span class="sc">$</span>RDB[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Atractus badius&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Atractus badius&quot;</span></span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a>split_check<span class="sc">$</span>status[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Atractus badius&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;up_to_date&quot;</span></span>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a></span>
+<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a>split_check<span class="sc">$</span>RDB[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Atractus major&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Atractus major&quot;</span></span>
+<span id="cb22-5"><a href="#cb22-5" tabindex="-1"></a>split_check<span class="sc">$</span>status[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Atractus major&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;up_to_date&quot;</span></span>
+<span id="cb22-6"><a href="#cb22-6" tabindex="-1"></a></span>
+<span id="cb22-7"><a href="#cb22-7" tabindex="-1"></a>split_check<span class="sc">$</span>RDB[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Atractus snethlageae&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Atractus snethlageae&quot;</span></span>
+<span id="cb22-8"><a href="#cb22-8" tabindex="-1"></a>split_check<span class="sc">$</span>status[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Atractus snethlageae&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;up_to_date&quot;</span></span>
+<span id="cb22-9"><a href="#cb22-9" tabindex="-1"></a></span>
+<span id="cb22-10"><a href="#cb22-10" tabindex="-1"></a>toAdd <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">query =</span> <span class="fu">c</span>(<span class="st">&quot;Atractus akerios&quot;</span>, <span class="st">&quot;Atractus nawa&quot;</span>),</span>
+<span id="cb22-11"><a href="#cb22-11" tabindex="-1"></a>                    <span class="at">RDB =</span> <span class="fu">c</span>(<span class="st">&quot;Atractus akerios&quot;</span>, <span class="st">&quot;Atractus nawa&quot;</span>),</span>
+<span id="cb22-12"><a href="#cb22-12" tabindex="-1"></a>                    <span class="at">status =</span> <span class="st">&quot;split_added&quot;</span>)</span>
+<span id="cb22-13"><a href="#cb22-13" tabindex="-1"></a>      </span></code></pre></div>
+<p>To keep the workflow I will just pretend that only checking if the
+species occurs in Brazil is enough to add them to our list as if we got
+the their data managed properly:</p>
+<p><em>Chironius:</em></p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" tabindex="-1"></a><span class="fu">reptSearch</span>(<span class="st">&quot;Chironius dracomaris&quot;</span>)</span>
+<span id="cb23-2"><a href="#cb23-2" tabindex="-1"></a><span class="fu">reptSearch</span>(<span class="st">&quot;Chironius gouveai&quot;</span>)</span>
+<span id="cb23-3"><a href="#cb23-3" tabindex="-1"></a><span class="fu">reptSearch</span>(<span class="st">&quot;Chironius nigelnoriegai&quot;</span>) <span class="co">#not in Brazil</span></span>
+<span id="cb23-4"><a href="#cb23-4" tabindex="-1"></a></span>
+<span id="cb23-5"><a href="#cb23-5" tabindex="-1"></a>split_check<span class="sc">$</span>RDB[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Chironius bicarinatus&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Chironius bicarinatus&quot;</span></span>
+<span id="cb23-6"><a href="#cb23-6" tabindex="-1"></a>split_check<span class="sc">$</span>status[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Chironius bicarinatus&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;up_to_date&quot;</span></span>
+<span id="cb23-7"><a href="#cb23-7" tabindex="-1"></a></span>
+<span id="cb23-8"><a href="#cb23-8" tabindex="-1"></a>split_check<span class="sc">$</span>RDB[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Chironius carinatus&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Chironius carinatus&quot;</span></span>
+<span id="cb23-9"><a href="#cb23-9" tabindex="-1"></a>split_check<span class="sc">$</span>status[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Chironius carinatus&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;up_to_date&quot;</span></span>
+<span id="cb23-10"><a href="#cb23-10" tabindex="-1"></a></span>
+<span id="cb23-11"><a href="#cb23-11" tabindex="-1"></a>split_check<span class="sc">$</span>RDB[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Chironius fuscus&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Chironius fuscus&quot;</span></span>
+<span id="cb23-12"><a href="#cb23-12" tabindex="-1"></a>split_check<span class="sc">$</span>status[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Chironius fuscus&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;up_to_date&quot;</span></span>
+<span id="cb23-13"><a href="#cb23-13" tabindex="-1"></a></span>
+<span id="cb23-14"><a href="#cb23-14" tabindex="-1"></a>toAdd <span class="ot">&lt;-</span> <span class="fu">rbind</span>(toAdd, <span class="fu">data.frame</span>(<span class="at">query =</span> <span class="fu">c</span>(<span class="st">&quot;Chironius dracomaris&quot;</span>, <span class="st">&quot;Chironius gouveai&quot;</span>),</span>
+<span id="cb23-15"><a href="#cb23-15" tabindex="-1"></a>                      <span class="at">RDB =</span> <span class="fu">c</span>(<span class="st">&quot;Chironius dracomaris&quot;</span>, <span class="st">&quot;Chironius gouveai&quot;</span>),</span>
+<span id="cb23-16"><a href="#cb23-16" tabindex="-1"></a>                      <span class="at">status =</span> <span class="st">&quot;split_added&quot;</span>))</span></code></pre></div>
+<p><em>Oxybelis:</em></p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a><span class="fu">reptSearch</span>(<span class="st">&quot;Oxybelis inkaterra&quot;</span>) <span class="co">#not in Brazil</span></span>
+<span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a><span class="fu">reptSearch</span>(<span class="st">&quot;Oxybelis koehleri&quot;</span>) <span class="co">#not in Brazil</span></span>
+<span id="cb24-3"><a href="#cb24-3" tabindex="-1"></a><span class="fu">reptSearch</span>(<span class="st">&quot;Oxybelis rutherfordi&quot;</span>) <span class="co">#not in Brazil</span></span>
+<span id="cb24-4"><a href="#cb24-4" tabindex="-1"></a></span>
+<span id="cb24-5"><a href="#cb24-5" tabindex="-1"></a>split_check<span class="sc">$</span>RDB[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Oxybelis aeneus&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Oxybelis aeneus&quot;</span></span>
+<span id="cb24-6"><a href="#cb24-6" tabindex="-1"></a>split_check<span class="sc">$</span>status[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Oxybelis aeneus&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;up_to_date&quot;</span></span></code></pre></div>
+<p><em>Bothrocophias:</em></p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" tabindex="-1"></a><span class="fu">reptSearch</span>(<span class="st">&quot;Bothrocophias myrringae&quot;</span>) <span class="co">#not in Brazil</span></span>
+<span id="cb25-2"><a href="#cb25-2" tabindex="-1"></a><span class="fu">reptSearch</span>(<span class="st">&quot;Bothrocophias tulitoi&quot;</span>) <span class="co">#not in Brazil</span></span>
+<span id="cb25-3"><a href="#cb25-3" tabindex="-1"></a></span>
+<span id="cb25-4"><a href="#cb25-4" tabindex="-1"></a>split_check<span class="sc">$</span>RDB[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Bothrocophias microphthalmus&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Bothrocophias microphthalmus&quot;</span></span>
+<span id="cb25-5"><a href="#cb25-5" tabindex="-1"></a>split_check<span class="sc">$</span>status[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Bothrocophias microphthalmus&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;up_to_date&quot;</span></span></code></pre></div>
+<p><em>Bothrops:</em></p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a><span class="fu">reptSearch</span>(<span class="st">&quot;Bothrops oligobalius&quot;</span>)</span>
+<span id="cb26-2"><a href="#cb26-2" tabindex="-1"></a><span class="fu">reptSearch</span>(<span class="st">&quot;Bothrops monsignifer&quot;</span>) <span class="co">#not in Brazil</span></span>
+<span id="cb26-3"><a href="#cb26-3" tabindex="-1"></a><span class="fu">reptSearch</span>(<span class="st">&quot;Bothrops sonene&quot;</span>) <span class="co">#not in Brazil</span></span>
+<span id="cb26-4"><a href="#cb26-4" tabindex="-1"></a></span>
+<span id="cb26-5"><a href="#cb26-5" tabindex="-1"></a>split_check<span class="sc">$</span>RDB[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Bothrops brazili&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Bothrops brazili&quot;</span></span>
+<span id="cb26-6"><a href="#cb26-6" tabindex="-1"></a>split_check<span class="sc">$</span>status[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Bothrops brazili&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;up_to_date&quot;</span></span>
+<span id="cb26-7"><a href="#cb26-7" tabindex="-1"></a></span>
+<span id="cb26-8"><a href="#cb26-8" tabindex="-1"></a>split_check<span class="sc">$</span>RDB[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Bothrops mattogrossensis&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Bothrops mattogrossensis&quot;</span></span>
+<span id="cb26-9"><a href="#cb26-9" tabindex="-1"></a>split_check<span class="sc">$</span>status[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Bothrops mattogrossensis&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;up_to_date&quot;</span></span>
+<span id="cb26-10"><a href="#cb26-10" tabindex="-1"></a></span>
+<span id="cb26-11"><a href="#cb26-11" tabindex="-1"></a>split_check<span class="sc">$</span>RDB[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Bothrops neuwiedi&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Bothrops neuwiedi&quot;</span></span>
+<span id="cb26-12"><a href="#cb26-12" tabindex="-1"></a>split_check<span class="sc">$</span>status[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Bothrops neuwiedi&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;up_to_date&quot;</span></span>
+<span id="cb26-13"><a href="#cb26-13" tabindex="-1"></a></span>
+<span id="cb26-14"><a href="#cb26-14" tabindex="-1"></a>toAdd <span class="ot">&lt;-</span> <span class="fu">rbind</span>(toAdd, <span class="fu">data.frame</span>(<span class="at">query =</span> <span class="fu">c</span>(<span class="st">&quot;Bothrops oligobalius&quot;</span>),</span>
+<span id="cb26-15"><a href="#cb26-15" tabindex="-1"></a>                      <span class="at">RDB =</span> <span class="fu">c</span>(<span class="st">&quot;Bothrops oligobalius&quot;</span>),</span>
+<span id="cb26-16"><a href="#cb26-16" tabindex="-1"></a>                      <span class="at">status =</span> <span class="st">&quot;split_added&quot;</span>))</span></code></pre></div>
+<p><em>Erythrolamprus:</em></p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" tabindex="-1"></a><span class="fu">reptSearch</span>(<span class="st">&quot;Erythrolamprus aenigma&quot;</span>)</span>
+<span id="cb27-2"><a href="#cb27-2" tabindex="-1"></a><span class="fu">reptSearch</span>(<span class="st">&quot;Erythrolamprus pseudoreginae&quot;</span>) <span class="co">#not in Brazil</span></span>
+<span id="cb27-3"><a href="#cb27-3" tabindex="-1"></a></span>
+<span id="cb27-4"><a href="#cb27-4" tabindex="-1"></a>split_check<span class="sc">$</span>RDB[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Erythrolamprus poecilogyrus&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Erythrolamprus poecilogyrus&quot;</span></span>
+<span id="cb27-5"><a href="#cb27-5" tabindex="-1"></a>split_check<span class="sc">$</span>status[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Erythrolamprus poecilogyrus&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;up_to_date&quot;</span></span>
+<span id="cb27-6"><a href="#cb27-6" tabindex="-1"></a></span>
+<span id="cb27-7"><a href="#cb27-7" tabindex="-1"></a>split_check<span class="sc">$</span>RDB[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Erythrolamprus reginae&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Erythrolamprus reginae&quot;</span></span>
+<span id="cb27-8"><a href="#cb27-8" tabindex="-1"></a>split_check<span class="sc">$</span>status[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Erythrolamprus reginae&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;up_to_date&quot;</span></span>
+<span id="cb27-9"><a href="#cb27-9" tabindex="-1"></a></span>
+<span id="cb27-10"><a href="#cb27-10" tabindex="-1"></a>toAdd <span class="ot">&lt;-</span> <span class="fu">rbind</span>(toAdd, <span class="fu">data.frame</span>(<span class="at">query =</span> <span class="fu">c</span>(<span class="st">&quot;Erythrolamprus aenigma&quot;</span>),</span>
+<span id="cb27-11"><a href="#cb27-11" tabindex="-1"></a>                      <span class="at">RDB =</span> <span class="fu">c</span>(<span class="st">&quot;Erythrolamprus aenigma&quot;</span>),</span>
+<span id="cb27-12"><a href="#cb27-12" tabindex="-1"></a>                      <span class="at">status =</span> <span class="st">&quot;split_added&quot;</span>))</span></code></pre></div>
+<p><em>Helicops:</em></p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" tabindex="-1"></a><span class="fu">reptSearch</span>(<span class="st">&quot;Helicops phantasma&quot;</span>)</span>
+<span id="cb28-2"><a href="#cb28-2" tabindex="-1"></a></span>
+<span id="cb28-3"><a href="#cb28-3" tabindex="-1"></a>split_check<span class="sc">$</span>RDB[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Helicops leopardinus&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Helicops leopardinus&quot;</span></span>
+<span id="cb28-4"><a href="#cb28-4" tabindex="-1"></a>split_check<span class="sc">$</span>status[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Helicops leopardinus&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;up_to_date&quot;</span></span>
+<span id="cb28-5"><a href="#cb28-5" tabindex="-1"></a></span>
+<span id="cb28-6"><a href="#cb28-6" tabindex="-1"></a>toAdd <span class="ot">&lt;-</span> <span class="fu">rbind</span>(toAdd, <span class="fu">data.frame</span>(<span class="at">query =</span> <span class="fu">c</span>(<span class="st">&quot;Helicops phantasma&quot;</span>),</span>
+<span id="cb28-7"><a href="#cb28-7" tabindex="-1"></a>                      <span class="at">RDB =</span> <span class="fu">c</span>(<span class="st">&quot;Helicops phantasma&quot;</span>),</span>
+<span id="cb28-8"><a href="#cb28-8" tabindex="-1"></a>                      <span class="at">status =</span> <span class="st">&quot;split_added&quot;</span>))</span></code></pre></div>
+<p><em>Leptophis:</em></p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" tabindex="-1"></a><span class="fu">reptSearch</span>(<span class="st">&quot;Leptophis ahaetulla&quot;</span>)</span>
+<span id="cb29-2"><a href="#cb29-2" tabindex="-1"></a></span>
+<span id="cb29-3"><a href="#cb29-3" tabindex="-1"></a>split_check<span class="sc">$</span>RDB[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Leptophis ahaetulla&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Leptophis ahaetulla&quot;</span></span>
+<span id="cb29-4"><a href="#cb29-4" tabindex="-1"></a>split_check<span class="sc">$</span>status[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Leptophis ahaetulla&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;up_to_date&quot;</span></span>
+<span id="cb29-5"><a href="#cb29-5" tabindex="-1"></a></span>
+<span id="cb29-6"><a href="#cb29-6" tabindex="-1"></a>toAdd <span class="ot">&lt;-</span> <span class="fu">rbind</span>(toAdd, <span class="fu">data.frame</span>(<span class="at">query =</span> <span class="fu">c</span>(<span class="st">&quot;Leptophis mystacinus&quot;</span>),</span>
+<span id="cb29-7"><a href="#cb29-7" tabindex="-1"></a>                      <span class="at">RDB =</span> <span class="fu">c</span>(<span class="st">&quot;Leptophis mystacinus&quot;</span>),</span>
+<span id="cb29-8"><a href="#cb29-8" tabindex="-1"></a>                      <span class="at">status =</span> <span class="st">&quot;split_added&quot;</span>))</span></code></pre></div>
+<p><em>Micrurus:</em></p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" tabindex="-1"></a><span class="fu">reptSearch</span>(<span class="st">&quot;Micrurus anibal&quot;</span>)</span>
+<span id="cb30-2"><a href="#cb30-2" tabindex="-1"></a></span>
+<span id="cb30-3"><a href="#cb30-3" tabindex="-1"></a>split_check<span class="sc">$</span>RDB[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Micrurus ibiboboca&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Micrurus ibiboboca&quot;</span></span>
+<span id="cb30-4"><a href="#cb30-4" tabindex="-1"></a>split_check<span class="sc">$</span>status[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Micrurus ibiboboca&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;up_to_date&quot;</span></span>
+<span id="cb30-5"><a href="#cb30-5" tabindex="-1"></a></span>
+<span id="cb30-6"><a href="#cb30-6" tabindex="-1"></a>split_check<span class="sc">$</span>RDB[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Micrurus lemniscatus&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Micrurus lemniscatus&quot;</span></span>
+<span id="cb30-7"><a href="#cb30-7" tabindex="-1"></a>split_check<span class="sc">$</span>status[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Micrurus lemniscatus&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;up_to_date&quot;</span></span>
+<span id="cb30-8"><a href="#cb30-8" tabindex="-1"></a></span>
+<span id="cb30-9"><a href="#cb30-9" tabindex="-1"></a>toAdd <span class="ot">&lt;-</span> <span class="fu">rbind</span>(toAdd, <span class="fu">data.frame</span>(<span class="at">query =</span> <span class="fu">c</span>(<span class="st">&quot;Micrurus anibal&quot;</span>),</span>
+<span id="cb30-10"><a href="#cb30-10" tabindex="-1"></a>                      <span class="at">RDB =</span> <span class="fu">c</span>(<span class="st">&quot;Micrurus anibal&quot;</span>),</span>
+<span id="cb30-11"><a href="#cb30-11" tabindex="-1"></a>                      <span class="at">status =</span> <span class="st">&quot;split_added&quot;</span>))</span></code></pre></div>
+<p><em>Taeniophallus:</em></p>
+<div class="sourceCode" id="cb31"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" tabindex="-1"></a><span class="fu">reptSearch</span>(<span class="st">&quot;Chlorosoma dunupyana&quot;</span>)</span>
+<span id="cb31-2"><a href="#cb31-2" tabindex="-1"></a></span>
+<span id="cb31-3"><a href="#cb31-3" tabindex="-1"></a>split_check<span class="sc">$</span>RDB[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Taeniophallus brevirostris&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Taeniophallus brevirostris&quot;</span></span>
+<span id="cb31-4"><a href="#cb31-4" tabindex="-1"></a>split_check<span class="sc">$</span>status[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Taeniophallus brevirostris&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;up_to_date&quot;</span></span>
+<span id="cb31-5"><a href="#cb31-5" tabindex="-1"></a></span>
+<span id="cb31-6"><a href="#cb31-6" tabindex="-1"></a>toAdd <span class="ot">&lt;-</span> <span class="fu">rbind</span>(toAdd, <span class="fu">data.frame</span>(<span class="at">query =</span> <span class="fu">c</span>(<span class="st">&quot;Chlorosoma dunupyana&quot;</span>),</span>
+<span id="cb31-7"><a href="#cb31-7" tabindex="-1"></a>                      <span class="at">RDB =</span> <span class="fu">c</span>(<span class="st">&quot;Chlorosoma dunupyana&quot;</span>),</span>
+<span id="cb31-8"><a href="#cb31-8" tabindex="-1"></a>                      <span class="at">status =</span> <span class="st">&quot;split_added&quot;</span>))</span></code></pre></div>
+<p><em>Tantilla:</em></p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" tabindex="-1"></a><span class="fu">reptSearch</span>(<span class="st">&quot;Tantilla selmae&quot;</span>)</span>
+<span id="cb32-2"><a href="#cb32-2" tabindex="-1"></a></span>
+<span id="cb32-3"><a href="#cb32-3" tabindex="-1"></a>split_check<span class="sc">$</span>RDB[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Tantilla melanocephala&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;Tantilla melanocephala&quot;</span></span>
+<span id="cb32-4"><a href="#cb32-4" tabindex="-1"></a>split_check<span class="sc">$</span>status[split_check<span class="sc">$</span>query<span class="sc">==</span><span class="st">&quot;Tantilla melanocephala&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;up_to_date&quot;</span></span>
+<span id="cb32-5"><a href="#cb32-5" tabindex="-1"></a></span>
+<span id="cb32-6"><a href="#cb32-6" tabindex="-1"></a>toAdd <span class="ot">&lt;-</span> <span class="fu">rbind</span>(toAdd, <span class="fu">data.frame</span>(<span class="at">query =</span> <span class="fu">c</span>(<span class="st">&quot;Tantilla selmae&quot;</span>),</span>
+<span id="cb32-7"><a href="#cb32-7" tabindex="-1"></a>                      <span class="at">RDB =</span> <span class="fu">c</span>(<span class="st">&quot;Tantilla selmae&quot;</span>),</span>
+<span id="cb32-8"><a href="#cb32-8" tabindex="-1"></a>                      <span class="at">status =</span> <span class="st">&quot;split_added&quot;</span>))</span></code></pre></div>
+<p>At this point we have no other species to check for taxonomic split
+and a data frame with 11 new species to add to our initial list.
+Obviously, these species could have been added to the list before
+nomenclature harmonization, yet <code>reptSplitCheck</code> will at
+least suggest users to check their data as parts of it should no longer
+be attributed to the “split species”. That is the case, for example, of
+<em>Tantilla melanocephala</em> and the <em>Chironius</em>.</p>
+<p>At this point we got two objects: <code>sync</code> and
+<code>split_check</code> with the original queried names and the current
+names according to the Reptile Database. Combining them should return a
+unique data frame with all 411 queried species:</p>
+<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" tabindex="-1"></a>atlas_new <span class="ot">&lt;-</span> <span class="fu">rbind</span>(split_check, sync)</span>
+<span id="cb33-2"><a href="#cb33-2" tabindex="-1"></a><span class="fu">table</span>(atlas_new<span class="sc">$</span>status)</span></code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="center">merge</th>
+<th align="center">up_to_date</th>
+<th align="center">updated</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">2</td>
+<td align="center">373</td>
+<td align="center">36</td>
+</tr>
+</tbody>
+</table>
+<p>And we have object <code>toAdd</code> with the 11 new species we
+detected as taxonomic split from our queried, but we will combine them
+latter.</p>
+<p>Now, from the 38 reviewed species many had automated nomenclature
+update. They could have been synonymized with some of the matched names,
+such as the <em>Liotyphlops</em> case we detected before. To verify if
+any other species were synonymized we have to check the column
+<code>RDB</code> for duplicates:</p>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" tabindex="-1"></a>atlas_new[<span class="fu">duplicated</span>(atlas_new<span class="sc">$</span>RDB)<span class="sc">|</span><span class="fu">duplicated</span>(atlas_new<span class="sc">$</span>RDB, <span class="at">fromLast =</span> <span class="cn">TRUE</span>),]</span></code></pre></div>
+<p>With that we detect that all species with status “updated” were also
+considered junior synonyms of the “up_to_date” species. The
+straightforward decision here is to “merge” their data to those of the
+senior synonyms. Let’s pretend this is all already done and now we just
+have to remove their names from the updated dataset. Just to make
+everything clear I will first change their status to “merge”</p>
+<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" tabindex="-1"></a>atlas_new[<span class="fu">duplicated</span>(atlas_new<span class="sc">$</span>RDB)<span class="sc">|</span><span class="fu">duplicated</span>(atlas_new<span class="sc">$</span>RDB, <span class="at">fromLast =</span> <span class="cn">TRUE</span>),]<span class="sc">$</span>status <span class="ot">&lt;-</span> <span class="st">&quot;merge&quot;</span></span>
+<span id="cb35-2"><a href="#cb35-2" tabindex="-1"></a></span>
+<span id="cb35-3"><a href="#cb35-3" tabindex="-1"></a>atlas_new[atlas_new<span class="sc">$</span>status<span class="sc">==</span><span class="st">&quot;merge&quot;</span>,]</span></code></pre></div>
+<p>And now we remove the eight species with status “merge” where the
+<code>query</code> is different from <code>RDB</code> (e.g. updated
+nomenclature/junior synonyms):</p>
+<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" tabindex="-1"></a>atlas_new[atlas_new<span class="sc">$</span>query<span class="sc">!=</span>atlas_new<span class="sc">$</span>RDB <span class="sc">&amp;</span> atlas_new<span class="sc">$</span>status<span class="sc">==</span><span class="st">&quot;merge&quot;</span>,] <span class="co">#checking the entries to remove</span></span>
+<span id="cb36-2"><a href="#cb36-2" tabindex="-1"></a></span>
+<span id="cb36-3"><a href="#cb36-3" tabindex="-1"></a>atlas_new <span class="ot">&lt;-</span> atlas_new[<span class="sc">!</span>(atlas_new<span class="sc">$</span>query<span class="sc">!=</span>atlas_new<span class="sc">$</span>RDB <span class="sc">&amp;</span> atlas_new<span class="sc">$</span>status<span class="sc">==</span><span class="st">&quot;merge&quot;</span>),] <span class="co">#removing from the dataset</span></span>
+<span id="cb36-4"><a href="#cb36-4" tabindex="-1"></a></span>
+<span id="cb36-5"><a href="#cb36-5" tabindex="-1"></a>atlas_new<span class="sc">$</span>status[atlas_new<span class="sc">$</span>status<span class="sc">==</span><span class="st">&quot;merge&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;up_to_date&quot;</span> <span class="co">#returning the original status to the valid names</span></span></code></pre></div>
+<p>Attention here! If you have a large dataset you might not want to
+remove these entries prior to merging the new nomenclature with the
+dataset itself. The column used to merge would be the
+<code>query</code>, if you remove these entries you will just have to be
+careful using <code>merge</code>.</p>
+<p>Our dataset has 403 species now, but we still have to add the species
+from “toAdd” detected with <code>reptSplitCheck</code>:</p>
+<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" tabindex="-1"></a>atlas_new <span class="ot">&lt;-</span> <span class="fu">rbind</span>(atlas_new, toAdd)</span>
+<span id="cb37-2"><a href="#cb37-2" tabindex="-1"></a></span>
+<span id="cb37-3"><a href="#cb37-3" tabindex="-1"></a>atlas_new <span class="ot">&lt;-</span> atlas_new[<span class="fu">order</span>(atlas_new<span class="sc">$</span>query),] <span class="co">#Optional: reorder species names</span></span>
+<span id="cb37-4"><a href="#cb37-4" tabindex="-1"></a></span>
+<span id="cb37-5"><a href="#cb37-5" tabindex="-1"></a><span class="fu">table</span>(atlas_new<span class="sc">$</span>status)</span></code></pre></div>
+<table>
+<thead>
+<tr class="header">
+<th align="center">split_added</th>
+<th align="center">up_to_date</th>
+<th align="center">updated</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center">11</td>
+<td align="center">373</td>
+<td align="center">30</td>
+</tr>
+</tbody>
+</table>
+<p>Final check for duplicated names in the updated nomenclature:</p>
+<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" tabindex="-1"></a><span class="fu">sum</span>(<span class="fu">duplicated</span>(atlas_new<span class="sc">$</span>RDB))</span></code></pre></div>
+<p>In terms of nomenclature update, considering that all data management
+were also accounted for, we are done. But, let’s say that we are
+interested in verifying which are the other snakes species that occur in
+Brazil according to the Reptile Database. To do so we can again use
+<code>reptCompare</code>, but with the <code>compareDataset</code>
+argument:</p>
+<div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" tabindex="-1"></a><span class="fu">reptCompare</span>(atlas_new<span class="sc">$</span>RDB, br_snakes, <span class="at">compareDataset =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<p>This will show which species are in <code>br_snakes</code> but are
+not in <code>atlas_new</code>, revealing 37 species that according to
+the RDB should be added to our distribution database. But that is
+another story. Now, if we want to check the opposite: which species are
+in <code>atlas_new</code> but are not in <code>br_snakes</code>, we can
+just change the objects position in <code>reptCompare</code>:</p>
+<div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" tabindex="-1"></a><span class="fu">reptCompare</span>(br_snakes, atlas_new<span class="sc">$</span>RDB, <span class="at">compareDataset =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<p>And that will again show <em>Apostolepis ambiniger</em> as in the
+very first comparison in this tutorial in which it received the status
+“absent”.</p>
+<p>Providing that nomenclature is harmonized in both datasets
+<code>reptCompare</code> will be useful to highlight discrepancies.</p>
+<p>That is all for this tutorial. I hope it helped to comprehend a
+little better how the package works in terms of harmonizing nomenclature
+using the Reptile Database as a reference.</p>
+</div>
+<div id="references" class="section level2">
+<h2><strong>References</strong></h2>
+<p>Nogueira, C. C., Argôlo, A. J. S., Arzamendia, V., Azevedo, J. A. R.,
+Barbo, F. E., Bérnils, R. S., … &amp; Martins, M. (2019). Atlas of
+Brazilian Snakes: Verified Point-Locality Maps to Mitigate the Wallacean
+Shortfall in a Megadiverse Snake Fauna. <em>South American Journal of
+Herpetology</em>, 14(sp1), 1–274. <a href="http://dx.doi.org/10.2994/sajh-d-19-00120.1" class="uri">http://dx.doi.org/10.2994/sajh-d-19-00120.1</a></p>
+<p>Uetz, P., Freed, P, Aguilar, R., Reyes, F., Kudera, J. &amp; Hošek,
+J. (eds.) (2025). <a href="http://www.reptile-database.org">The Reptile
+Database</a></p>
+<p>Vieira-Alencar, J. P. S., Liedtke, H. C., Meiri, S., Roll, U., Uetz,
+P., Nori, J. (2025). “<em>letsRept</em>: An R Package to Access the
+Global Reptile Database and Facilitate Taxonomic Harmonization.”
+<em>Biodiversity Informatics</em>, 19, 120-143. <a href="https://doi.org/10.17161/bi.v19i.24329" class="uri">https://doi.org/10.17161/bi.v19i.24329</a></p>
+</div>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

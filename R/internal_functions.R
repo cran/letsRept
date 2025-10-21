@@ -1,3 +1,119 @@
+# safeRequest -------------------------------------------------------------
+safeRequest <- function(url, max_tries = 5, base_wait = 1) {
+  attempt <- 1
+  repeat {
+    # Add random jitter to avoid hammering the server
+    Sys.sleep(stats::runif(1, 0, 0.5))
+    
+    resp <- try(httr::GET(url, httr::user_agent("Mozilla/5.0")), silent = TRUE)
+    
+    if (!inherits(resp, "try-error") && httr::status_code(resp) == 200) {
+      return(rvest::read_html(resp))
+    }
+    
+    if (attempt < max_tries) {
+      wait_time <- base_wait * 2^(attempt - 1)
+      message(sprintf(
+        "Attempt %d for %s failed (status: %s). Retrying in %ds...",
+        attempt, url,
+        ifelse(inherits(resp, "try-error"), "connection error", httr::status_code(resp)),
+        wait_time
+      ))
+      Sys.sleep(wait_time)
+      attempt <- attempt + 1
+    } else {
+      stop(sprintf("Failed to fetch %s after %d tries", url, attempt))
+    }
+  }
+}
+
+# safeParallel ------------------------------------------------------------
+
+#' Safe parallel execution
+#'
+#' Helper for functions like \code{reptSpecies()} and \code{reptSynonyms()}. Selects a safe parallel backend depending on the user's OS and optionally shows progress bars.
+#'
+#' @param data A list or vector of items to process in parallel.
+#' @param FUN A function to be applied to each element of \code{data}.
+#' @param cores Integer. Number of processor cores to use.
+#' @param showProgress Logical. Whether to display a progress bar if supported. Default is \code{TRUE}.
+#'
+#' @return A list containing the results of applying \code{FUN} to each element of \code{data}.
+#' 
+#' @keywords internal
+#' @noRd
+#' 
+safeParallel <- function(data, FUN, cores = 1, showProgress = TRUE) {
+  is_mac <- Sys.info()["sysname"] == "Darwin"
+  
+  if (.Platform$OS.type == "unix") {
+    if (is_mac || cores > 1) { # macOS is unsafe with fork, or multiple cores
+      cl <- parallel::makeCluster(cores)
+      on.exit(parallel::stopCluster(cl), add = TRUE)
+      
+      out <- tryCatch(
+        {
+          if (showProgress && requireNamespace("pbapply", quietly = TRUE)) {
+            pbapply::pblapply(data, FUN, cl = cl)
+          } else {
+            parallel::parLapply(cl, data, FUN)
+          }
+        },
+        interrupt = function(e) {
+          message("Parallel processing was interrupted by user.")
+          NULL
+        },
+        error = function(e) {
+          message("An error occurred: ", e$message)
+          NULL
+        }
+      )
+      
+    } else { # Linux, safe to use mclapply
+      out <- tryCatch(
+        {
+          if (showProgress && requireNamespace("pbmcapply", quietly = TRUE)) {
+            pbmcapply::pbmclapply(data, FUN, mc.cores = cores)
+          } else {
+            parallel::mclapply(data, FUN, mc.cores = cores)
+          }
+        },
+        interrupt = function(e) {
+          message("Parallel processing was interrupted by user.")
+          NULL
+        },
+        error = function(e) {
+          message("An error occurred: ", e$message)
+          NULL
+        }
+      )
+    }
+    
+  } else { # Windows
+    cl <- parallel::makeCluster(cores)
+    on.exit(parallel::stopCluster(cl), add = TRUE)
+    
+    out <- tryCatch(
+      {
+        if (showProgress && requireNamespace("pbapply", quietly = TRUE)) {
+          pbapply::pblapply(data, FUN, cl = cl)
+        } else {
+          parallel::parLapply(cl, data, FUN)
+        }
+      },
+      interrupt = function(e) {
+        message("Parallel processing was interrupted by user.")
+        NULL
+      },
+      error = function(e) {
+        message("An error occurred: ", e$message)
+        NULL
+      }
+    )
+  }
+  return(out)
+}
+
 # match_taxon -------------------------------------------------------------
 
 #' Match higher taxonomic ranks
@@ -20,51 +136,6 @@ match_taxon <- function(taxa_vector, rank_list) {
   match_positions <- sapply(matches, function(rank) stringr::str_locate(taxa_vector, rank)[1])
   sorted_matches <- matches[order(match_positions)]
   return(sorted_matches[1])
-}
-
-# safeParallel ------------------------------------------------------------
-
-#' Safe parallel execution
-#'
-#' Helper for functions like \code{reptSpecies()} and \code{reptSynonyms()}. Selects a safe parallel backend depending on the user's OS and optionally shows progress bars.
-#'
-#' @param data A list or vector of items to process in parallel.
-#' @param FUN A function to be applied to each element of \code{data}.
-#' @param cores Integer. Number of processor cores to use.
-#' @param showProgress Logical. Whether to display a progress bar if supported. Default is \code{TRUE}.
-#'
-#' @return A list containing the results of applying \code{FUN} to each element of \code{data}.
-#' 
-#' @keywords internal
-#' @noRd
-safeParallel <- function(data, FUN, cores = 1, showProgress = TRUE) {
-is_mac <- Sys.info()["sysname"] == "Darwin"
-
-if (.Platform$OS.type == "unix") {
-  if (is_mac || cores > 1) { # macOS is unsafe with fork
-    cl <- parallel::makeCluster(cores)
-    on.exit(parallel::stopCluster(cl))
-    if (showProgress && requireNamespace("pbapply", quietly = TRUE)) {
-      pbapply::pblapply(data, FUN, cl = cl)
-    } else {
-      parallel::parLapply(cl, data, FUN)
-    }
-  } else { # safe to use mclapply (Linux)
-    if (showProgress && requireNamespace("pbmcapply", quietly = TRUE)) {
-      pbmcapply::pbmclapply(data, FUN, mc.cores = cores)
-    } else {
-      parallel::mclapply(data, FUN, mc.cores = cores)
-    }
-  }
-} else { # Windows
-  cl <- parallel::makeCluster(cores)
-  on.exit(parallel::stopCluster(cl))
-  if (showProgress && requireNamespace("pbapply", quietly = TRUE)) {
-    pbapply::pblapply(data, FUN, cl = cl)
-  } else {
-    parallel::parLapply(cl, data, FUN)
-  }
-}
 }
 
 # higherSampleParallel ----------------------------------------------------
@@ -95,7 +166,7 @@ higherSampleParallel <- function(x, species_list, genus_list, url_list, orders =
   
   j <- which(species_list == x)
   tryCatch({
-    sp_page <- rvest::read_html(url_list[j])
+    sp_page <- safeRequest(url_list[j])
     title <- rvest::html_element(sp_page, "h1")
     
     sppAuthor <- rvest::html_text(title, trim = TRUE)
@@ -138,158 +209,60 @@ higherSampleParallel <- function(x, species_list, genus_list, url_list, orders =
                 url = url_list[j]))
   })
 }
-
-# higherSample ------------------------------------------------------------
-
-
-#' Extract taxonomic info from the Reptile Database (single-core with backup)
-#'
-#' Internal function used by \code{reptSpecies()} when \code{cores = 1}. Loops over species pages and extracts
-#' taxonomic information (order, suborder, family, author, etc.). Supports progress printing and checkpoint-based backups.
-#'
-#' @param species_list Character vector of species names.
-#' @param genus_list Character vector of genus names.
-#' @param url_list Character vector of corresponding species URLs.
-#' @param orders Character vector of order names to match.
-#' @param suborders Character vector of suborder names to match.
-#' @param fullHigher Logical. Whether to return the full higher taxonomic string (default is \code{FALSE}).
-#' @param getLink Logical. Whether to include the species URL in the output (default is \code{FALSE}).
-#' @param backup_file Optional. File path to save periodic backup using \code{saveRDS()}.
-#' @param checkpoint Optional. Integer specifying how often (in number of species) to save backup. If \code{NULL}, saves only once at the end.
-#' @param showProgress Logical. if \code{TRUE}, prints data sampling progress. Default is \code{TRUE}.
-#'
-#' @return A data frame containing the scraped taxonomic information. If vector lengths mismatch, returns a named list instead.
-#'
-#' @note Intended for internal use only. Called by \code{reptSpecies()} when not using parallelization.
-#'
-#' @keywords internal
-#' @noRd
-higherSample <- function(species_list,
-                         genus_list,
-                         url_list,
-                         orders = orders,
-                         suborders = suborders,
-                         fullHigher = FALSE,
-                         getLink = FALSE,
-                         backup_file = NULL,
-                         checkpoint = NULL,
-                         showProgress = TRUE)
-{
-  taxa_vector_list <- c()
-  order_list <- c()
-  suborder_list <- c()
-  family_list <- c()
-  sppAuthor_list <- c()
-  sppYear_list <- c()
-  n_species <- length(species_list)
+# higherSampleParallel_vector ---------------------------------------------
+higherSampleParallel_vector <- function(binomial, orders = orders, suborders = suborders, fullHigher = FALSE, getLink = FALSE)
+{ 
+  base_url <- "https://reptile-database.reptarium.cz/species"
+  gen <- strsplit(binomial, " ")[[1]][1]
+  species <- strsplit(binomial, " ")[[1]][2]
+  query <- paste0("?genus=", gen, "&species=", species)
+  sppLink <- paste0(base_url, query)
   
-  if (is.null(checkpoint)) checkpoint <- n_species
-  
-  for (j in seq_along(species_list)) {
-    tryCatch({
-      sp_page <- rvest::read_html(url_list[j])
-      title <- rvest::html_element(sp_page, "h1")
-      
-      sppAuthor <- rvest::html_text(title, trim = TRUE)
-      sppAuthor <- gsub("^([A-Z][a-z]+\\s+[a-z\\-]+)\\s*", "", sppAuthor)
-      sppAuthor <- gsub("\\s{2,}", " ", sppAuthor)
-      
-      sppAuthor <- trimws(gsub("\\s+", " ", sppAuthor))
-      
-      sppYear <- stringr::str_extract(sppAuthor, "\\d{4}")
-      
-      element <- rvest::html_element(sp_page, "table")
-      
-      taxa <- xml2::xml_child(element, 1)
-      td_taxa <- rvest::html_element(taxa, "td:nth-child(2)")
-      children <- xml2::xml_contents(td_taxa)
-      
-      taxa_vector <- rvest::html_text(children[xml2::xml_name(children) == "text"], trim = TRUE)
-      taxa_vector <- paste(taxa_vector, collapse = ", ")
-      
-      family <- stringr::str_extract(taxa_vector, "\\b[A-Z][a-z]+idae\\b")
-      order <- match_taxon(taxa_vector, orders)
-      suborder <- match_taxon(taxa_vector, suborders)
-      
-      ############################## DETECTING ERROR
-      if (all(is.na(c(family, order, suborder)))) {
-        message(sprintf("No higher taxa information for", species_list[j]))
-      }
-      ##############################
-      
-      taxa_vector_list <- c(taxa_vector_list, taxa_vector)
-      order_list <- c(order_list, order)
-      suborder_list <- c(suborder_list, suborder)
-      family_list <- c(family_list, family)
-      sppAuthor_list <- c(sppAuthor_list, sppAuthor)
-      sppYear_list <- c(sppYear_list, sppYear)
-      
-      if(showProgress == TRUE){
-      percent <- (j / n_species) * 100
-      cat(sprintf("\rGetting higher taxa progress: %.1f%%", percent))
-      flush.console()
-      }
-      
-      # back up chunk
-      # Save backup every checkpoint or at the end
-      if(!is.null(backup_file) &&
-         (j %% checkpoint == 0 || j == n_species)){
-        
-        n <- length(family_list)
-        backup <- data.frame(order = order_list,
-                             suborder = suborder_list,
-                             family = family_list,
-                             genus = genus_list[1:n],
-                             species = species_list[1:n],
-                             author = sppAuthor_list,
-                             year = sppYear_list)
-        
-        # Conditionally add URL if requested
-        if(getLink==TRUE){
-          backup$url <- url_list[1:n]
-        }
-        
-        # Conditionally add full higher taxa vector if requested
-        if(fullHigher==TRUE){
-          backup$taxa_vector <- taxa_vector_list[1:n]
-        }
-        saveRDS(backup, file = backup_file)
-        message(sprintf("Saved progress at species %d.", j, n))
-      }
-      
-    }, error = function(e) {
-      # Immediately print a concise error message for this species
-      message(sprintf("Error scraping '%s': %s", species_list[j], e$message))
-      # Return an error list so that you can filter or handle later
-      return(list(error = TRUE,
-                  species = species_list[j],
-                  message = e$message,
-                  url=url_list[j]))
-    })
-  }
-  n <- length(family_list)
-  all_vectors <- list(order = order_list[1:n], suborder = suborder_list[1:n],
-                      family = family_list[1:n], genus = genus_list[1:n], species = species_list[1:n],
-                      year = sppYear_list[1:n], author = sppAuthor_list[1:n],
-                      taxa_vector = if(fullHigher) taxa_vector_list[1:n] else NULL,
-                      url = if (getLink) url_list[1:n] else NULL)
-  all_vectors <- all_vectors[!sapply(all_vectors, is.null)]
-  lengths_vec <- sapply(all_vectors, length)
-  expected <- lengths_vec["species"]
-  if (all(lengths_vec == expected)) {
-    searchResults <- as.data.frame(all_vectors, stringsAsFactors = FALSE)
-  }
-  else {
-    message("Some vectors have different lengths! Returning list instead.")
-    print(lengths_vec)
-    diffs <- lengths_vec - expected
-    bad <- names(diffs[diffs != 0])
-    message("Mismatched vectors: ", paste(bad, collapse = ", "))
-    searchResults <- all_vectors
-    return(searchResults)
-  }
+  tryCatch({
+    sp_page <- safeRequest(sppLink)
+    title <- rvest::html_element(sp_page, "h1")
+    
+    sppAuthor <- rvest::html_text(title, trim = TRUE)
+    sppAuthor <- gsub("^([A-Z][a-z]+\\s+[a-z\\-]+)\\s*", "", sppAuthor)
+    sppAuthor <- gsub("\\s{2,}", " ", sppAuthor)
+    
+    sppAuthor <- trimws(gsub("\\s+", " ", sppAuthor))
+    
+    sppYear <- stringr::str_extract(sppAuthor, "\\d{4}")
+    
+    element <- rvest::html_element(sp_page, "table")
+    
+    taxa <- xml2::xml_child(element, 1)
+    td_taxa <- rvest::html_element(taxa, "td:nth-child(2)")
+    children <- xml2::xml_contents(td_taxa)
+    
+    taxa_vector <- rvest::html_text(children[xml2::xml_name(children) == "text"], trim = TRUE)
+    taxa_vector <- paste(taxa_vector, collapse = ", ")
+    
+    family <- stringr::str_extract(taxa_vector, "\\b[A-Z][a-z]+idae\\b")
+    order <- match_taxon(taxa_vector, orders)
+    suborder <- match_taxon(taxa_vector, suborders)
+    
+    return(list(
+      order = order,
+      suborder = suborder,
+      family = family,
+      genus = gen,
+      species = binomial,
+      year = sppYear,
+      author = sppAuthor,
+      taxa_vector = if (fullHigher) taxa_vector else NULL,
+      url = if (getLink) sppLink else NULL
+    ))
+    
+  }, error = function(e) {
+    return(list(error = TRUE,
+                species = binomial,
+                message = e$message,
+                url = sppLink)
+    )
+  })
 }
-
 # clean_species_names -----------------------------------------------------
 
 #' Clean taxonomic species names from synonym strings
@@ -320,7 +293,9 @@ clean_species_names <- function(names_vec) {
     "subsp\\.\\s*nov\\.?|var\\.\\s*\\w+|vari", acute_e, "t", acute_e, "\\.?(?:\\s*\\w+)?|",
     "aff\\.\\s*\\w+|cf\\.\\s*\\w+|\"[^\"]+\"|",
     left_dquote, "[^", right_dquote, "]+", right_dquote,
-    "))+)\\s*(?:[-", endash, emdash, "]|\\(|\\b\\p{Lu}{2,}\\b|\\d{4}|\\bet al\\.\\b|\\bin\\b).*"
+    #"))+)\\s*(?:[-", endash, emdash, "]|\\(|\\b\\p{Lu}{2,}\\b|\\d{4}|\\bet al\\.\\b|\\bin\\b).*"
+    "))+)\\s*(?:(?<![A-Za-z])[-", endash, emdash, "](?![A-Za-z])|\\(|\\b\\p{Lu}{2,}\\b|\\d{4}|\\bet al\\.\\b|\\bin\\b).*"
+   
   )
   extracted <- sub(pattern, "\\1", names_vec, perl = TRUE)
   
@@ -360,7 +335,7 @@ clean_species_names <- function(names_vec) {
 #' @noRd
 getSynonymsParallel <- function(i, x, getRef) {
   tryCatch({
-    url <- rvest::read_html(httr::GET(x$url[i], httr::user_agent("Mozilla/5.0")))
+    url <- safeRequest(x$url[i])
     element <- rvest::html_element(url, "table")
     
     syn <- xml2::xml_child(element, 4)
@@ -390,18 +365,13 @@ getSynonymsParallel <- function(i, x, getRef) {
   })
 }
 
-# getSynonyms -------------------------------------------------------------
+# getSynonymsParallel_vector ----------------------------------------------
 
-#' Get reptile species synonyms
+#' Get reptile species synonyms from vector
 #' 
 #' Scrapes synonyms of reptile species from The Reptile Database.
 #' 
-#' @param x A data frame with columns \code{species} and \code{url} (the respective Reptile Database URLs).  
-#'   Typically, the output of \code{letsRept::reptSpecies()}.
-#' @param checkpoint Integer specifying how many species to process before saving progress to \code{backup_file}.  
-#'   Helps avoid data loss if the function stops unexpectedly. Backups are saved only if \code{checkpoint} is not \code{NULL}.
-#' @param resume Logical. If \code{TRUE}, resumes processing from a previous backup saved at \code{backup_file}.
-#' @param backup_file Character string path to save or load the backup file.
+#' @param binomial A vector with \code{species} binomials.
 #' @param getRef Logical. If \code{TRUE}, returns synonyms along with the references mentioning them. Default is \code{FALSE}.
 #' @param showProgress Logical. If \code{TRUE}, prints data sampling progress. Default is \code{TRUE}.
 #' 
@@ -411,105 +381,64 @@ getSynonymsParallel <- function(i, x, getRef) {
 #' @keywords internal
 #' @noRd
 #' 
-getSynonyms <- function(x, checkpoint = NULL, resume=FALSE, backup_file = NULL, getRef=FALSE, showProgress=TRUE){
+getSynonymsParallel_vector <- function(binomial, getRef = FALSE, showProgress = TRUE) {
+  base_url <- "https://reptile-database.reptarium.cz/species"
+  gen <- strsplit(binomial, " ")[[1]][1]
+  species <- strsplit(binomial, " ")[[1]][2]
+  query <- paste0("?genus=", gen, "&species=", species)
+  sppLink <- paste0(base_url, query)
   
-  species_list <- c()
-  synonyms_list <- c()
-  synonymsRef_list <- c()
+  url <- safeRequest(sppLink)
+  element <- rvest::html_element(url, "table") # species table
   
-  start_index <- 1
-  # Load backup if resuming
-  if (resume && file.exists(backup_file)) {
-    x <- readRDS(backup_file)
-    species <- x$species
-    synonyms <- x$synonyms
-    if ("synonymRef" %in% names(backup_file)) {
-      synonymsRef <- backup_file$synonymsRef
-    }
-    
-    start_index <- length(species_list) + 1
-    message(sprintf("Resuming from species %d: %s", start_index, x$species[start_index]))
-  }
+  # Extract synonyms
+  syn <- xml2::xml_child(element, 4)
+  td2 <- rvest::html_element(syn, "td:nth-child(2)")
+  children <- xml2::xml_contents(td2)
   
-  for (i in seq_along(x$species)) {
-    result <- tryCatch({
-      url <- rvest::read_html(httr::GET(x$url[i], httr::user_agent("Mozilla/5.0")))
-      element <- rvest::html_element(url, "table") # species table
-      
-      # Extract synonyms
-      syn <- xml2::xml_child(element, 4)
-      td2 <- rvest::html_element(syn, "td:nth-child(2)")
-      children <- xml2::xml_contents(td2)
-      
-      synonyms_vector <- unique(rvest::html_text(children[xml2::xml_name(children) == "text"], trim = TRUE))
-      synonyms_vector <- synonyms_vector[!is.na(synonyms_vector) & trimws(synonyms_vector) != ""]
-      
-      synonyms <- clean_species_names(synonyms_vector)
-      species <- rep(x$species[i], times = length(synonyms))
-      
-      species_list <- c(species_list, species)
-      synonyms_list <- c(synonyms_list, synonyms)
-      synonymsRef_list <- c(synonymsRef_list, synonyms_vector)
-      
-      if(showProgress == TRUE){
-      msg <- sprintf("Progress: %.1f%%  - %s done! ", (i / length(x$species)) * 100, x$species[i])
-      cat("\r", format(msg, width = 60), sep = "")
-      utils::flush.console()
-      }
-      # Save backup every checkpoint
-      if(!is.null(checkpoint)){
-        if ((i %% checkpoint) == 0 || i == length(x$species)) {
-          backup <- data.frame(species = species_list,
-                               synonyms = synonyms_list,
-                               stringsAsFactors = FALSE)
-          if(getRef==FALSE){
-            backup$combined <- paste(backup$species, backup$synonyms, sep="_")
-            uniquerec <- data.frame(unique(backup$combined))
-            
-            backup_uniqueSynonyms <- tidyr::separate(data=uniquerec, col="unique.backup.combined.", 
-                                                     into=c("species", "synonyms"), sep="_",
-                                                     convert=TRUE)
-            saveRDS(backup_uniqueSynonyms, backup_file)
-          }else{
-            backup$synonymsRef <- synonymsRef_list
-            saveRDS(backup, backup_file)
-          }
-        }else{}
-      }
-    }, error = function(e) {
-      message(sprintf("Error scraping %s: %s", x$species[i], e$message))
-      species_list <<- c(species_list, x$species[i])
-      synonyms_list <<- c(synonyms_list, "failed")
-      synonymsRef_list <<- c(synonymsRef_list, "failed")
-    })
-  }
+  synonyms_vector <- unique(rvest::html_text(
+    children[xml2::xml_name(children) == "text"],
+    trim = TRUE
+  ))
+  synonyms_vector <- synonyms_vector[!is.na(synonyms_vector) & trimws(synonyms_vector) != ""]
   
-  if(getRef==TRUE){
-    synonymsResults <- data.frame(species = species_list,
-                                  synonyms = synonyms_list,
-                                  ref = synonymsRef_list,
-                                  stringsAsFactors = FALSE)
+  synonyms <- clean_species_names(synonyms_vector)
+  species_list <- rep(binomial, times = length(synonyms))
+  
+  if (getRef) {
+    synonymsResults <- data.frame(
+      species = species_list,
+      synonyms = synonyms,
+      ref = synonyms_vector,
+      stringsAsFactors = FALSE
+    )
     return(synonymsResults)
-  }else{
-    synonymsResults <- data.frame(species = species_list,
-                                  synonyms = synonyms_list,
-                                  stringsAsFactors = FALSE)
-    
-    synonymsResults$combined <- paste((synonymsResults)$species, (synonymsResults)$synonyms, sep="_")
+  } else {
+    synonymsResults <- data.frame(
+      species = species_list,
+      synonyms = synonyms,
+      stringsAsFactors = FALSE
+    )
+    synonymsResults$combined <- paste(synonymsResults$species,
+                                      synonymsResults$synonyms,
+                                      sep = "_")
     
     uniquerec <- data.frame(unique(synonymsResults$combined))
     
-    uniqueSynonyms <- tidyr::separate(data=uniquerec, col="unique.synonymsResults.combined.", 
-                                      into=c("species", "synonyms"), sep="_",
-                                      convert=TRUE)
+    uniqueSynonyms <- tidyr::separate(
+      data = uniquerec,
+      col = "unique.synonymsResults.combined.",
+      into = c("species", "synonyms"),
+      sep = "_",
+      convert = TRUE
+    )
     
-    if(showProgress == TRUE){
-    cat("\nSynonyms sampling complete!\n")
+    if (showProgress) {
+      cat("\nSynonyms sampling complete for", binomial, "\n")
     }
     return(uniqueSynonyms)
   }
 }
-
 # split check -------------------------------------------------------------
 
 #' Check if a species name might represent a split taxon
@@ -524,6 +453,7 @@ getSynonyms <- function(x, checkpoint = NULL, resume=FALSE, backup_file = NULL, 
 #' Species published from this year onward may indicate a recent split.
 #' @param verbose Logical; if \code{TRUE}, messages will be printed when an error occurs. Default is \code{TRUE}.
 #' @param includeAll Logical; If \code{TRUE}, include all species described since `pubDate` regardless of if it is already included in the queried species list. Default is \code{FALSE}
+#' @param exact Logical. Will search queried names for exact matches only (e.g., does not retrieve "Tantilla cf. melanocephala" when searching for "Tantilla melanocephala"). Default is \code{FALSE}.
 #'
 #' @return A data frame with three columns:
 #' \itemize{
@@ -534,7 +464,7 @@ getSynonyms <- function(x, checkpoint = NULL, resume=FALSE, backup_file = NULL, 
 #'
 #' @keywords internal
 #' @noRd
-splitCheck <- function(spp, pubDate = NULL, verbose = TRUE, includeAll = includeAll, x) {
+splitCheck <- function(spp, pubDate = NULL, verbose = TRUE, includeAll = includeAll, x, exact) {
   tryCatch({
     parts <- strsplit(spp, " ")[[1]]
     
@@ -543,13 +473,14 @@ splitCheck <- function(spp, pubDate = NULL, verbose = TRUE, includeAll = include
      if (exact_flag) {
       link <- reptAdvancedSearch(synonym = spp, verbose = verbose, exact = TRUE)
     } else {
-      link <- reptAdvancedSearch(synonym = spp, verbose = verbose)
+      link <- reptAdvancedSearch(synonym = spp, verbose = verbose, exact = exact)
     }
-    
     
     # Character link: standard HTML parsing
     if (is.character(link) && grepl("^https:", link)) {
-      search <- rvest::read_html(link)
+      
+      #search <- rvest::read_html(link)
+      search <- safeRequest(link)
       title_node <- rvest::html_element(search, "h1")
       title_text <- rvest::html_text(title_node, trim = TRUE)
       
@@ -610,6 +541,4 @@ splitCheck <- function(spp, pubDate = NULL, verbose = TRUE, includeAll = include
     data.frame(query = spp, RDB = NA, status = "failed", stringsAsFactors = FALSE)
   })
 }
-
-
 # End of internal functions -----------------------------------------------
