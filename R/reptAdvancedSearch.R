@@ -102,10 +102,10 @@ reptAdvancedSearch <- function(higher = NULL,
       if(verbose) message(msg, "\nProceed to reptSpecies() with the returned link\n")
       return(url)
     } else if (grepl("No species were found", msg)) {
-      warning("No species were found. Please verify the search arguments.\n")
+      if(verbose) warning("No species were found. Please verify the search arguments.\n")
       return("not_found")
     } else {
-      warning("Unexpected content in a search results page.\n")
+      if(verbose) warning("Unexpected content in a search results page.\n")
       return(invisible(NULL))
     }
     
@@ -115,5 +115,7 @@ reptAdvancedSearch <- function(higher = NULL,
     if(verbose) message("Searched binomial is currently:\n", binomial, "\n")
     search <- reptSearch(binomial = binomial, verbose = verbose)
     return(search)
+    #reptSearch(binomial = binomial, verbose = verbose)
+    #return(invisible(NULL))
   }
 }

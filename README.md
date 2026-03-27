@@ -33,11 +33,11 @@ browseVignettes("letsRept")
 
 ### **Internal datasets**
 
-- The package counts with a full list of current valid species (`allReptiles` - 12,500 species) with their respective higher taxa information (updated to 15th of September, 2025);
+- The package counts with a full list of current valid species (`allReptiles` - 12,568 species) with their respective higher taxa information (updated to 27th of March, 2026);
 
-- A dataset with all unique synonyms for each current valid species (`allSynonyms` - 53,159 entries - updated to 23th of May, 2025); 
+- A dataset with all unique synonyms for each current valid species (`allSynonyms` - 55,130 entries - updated to 27th of March, 2026); 
 
-- Another synonyms dataset with all entries considering their respective references (`allSynonymsRef`110,413 entries - updated to 23rd of May, 2025).
+- Another synonyms dataset with all entries considering their respective references (`allSynonymsRef`112,626 entries - updated to 27th of March, 2026).
 
 ### **Next steps**
 
@@ -46,7 +46,7 @@ browseVignettes("letsRept")
 - [x] &nbsp; Paper submission (August 18th, 2025)
 - [x] &nbsp; Paper publication (October 20th, 2025)
 - [x] &nbsp; update `allReptiles`
-- [ ] &nbsp; update `allSynonyms`
+- [x] &nbsp; update `allSynonyms`
 - [ ] &nbsp; Package webpage development
 - [ ] &nbsp; API development and package API compatibility
 
