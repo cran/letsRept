@@ -11,12 +11,12 @@
 #'
 #' @examples
 #' df <- data.frame(
-#'   species = c("Genus epithet 1", 
+#'   query = c("Genus epithet 1", 
 #'               "Genus epithet 2",
 #'               "Genus epithet 3",
 #'               "Genus epithet 4",
 #'               "Genus epithet 5"),
-#'   synonyms = c("Genus epithet 1.1; Genus epithet 1.2",
+#'   RDB = c("Genus epithet 1.1; Genus epithet 1.2",
 #'                 "Genus epithet 2",
 #'                 "Genus epithet 3",
 #'                 "Not found",
@@ -46,7 +46,8 @@ reptTidySyn <- function(df, filter = NULL) {
     
     if(length(filter) == 1 && filter=="merge"){
       df <- df[order(df$RDB),]
-    }
+    } else { 
+      df <- df[order(df$query),]}
     
   spacer <- "   "  # 3 spaces between columns
   col_names <- names(df)

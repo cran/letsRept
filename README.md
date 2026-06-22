@@ -33,22 +33,19 @@ browseVignettes("letsRept")
 
 ### **Internal datasets**
 
-- The package counts with a full list of current valid species (`allReptiles` - 12,568 species) with their respective higher taxa information (updated to 27th of March, 2026);
+- The package counts with a full list of current valid species (`allReptiles` - 12,650 species) with their respective higher taxa information (updated to 22nd of June, 2026);
 
 - A dataset with all unique synonyms for each current valid species (`allSynonyms` - 55,130 entries - updated to 27th of March, 2026); 
 
-- Another synonyms dataset with all entries considering their respective references (`allSynonymsRef`112,626 entries - updated to 27th of March, 2026).
+- Another synonyms dataset with all entries considering their respective references (`allSynonymsRef`113,377 entries - updated to 22nd of June, 2026).
 
 ### **Next steps**
 
-- [x] &nbsp; Stable version 1.0.1 CRAN submission (August 18th, 2025)
-- [x] &nbsp; Stable version 1.0.1 CRAN release (August 22nd, 2025)
-- [x] &nbsp; Paper submission (August 18th, 2025)
-- [x] &nbsp; Paper publication (October 20th, 2025)
-- [x] &nbsp; update `allReptiles`
-- [x] &nbsp; update `allSynonyms`
 - [ ] &nbsp; Package webpage development
-- [ ] &nbsp; API development and package API compatibility
+
+### **News on GitHub Version (not in CRAN yet)**
+
+Function `reptSplitCheck()` now accepts a vector of pubDates. In this way each species in the querry can be checked against an specific date.
 
 ### **How to Cite**
 
@@ -74,7 +71,3 @@ Vieira-Alencar, João Paulo dos Santos (joaopaulo.valencar@gmail.com)
 
 [Orcid](https://orcid.org/0000-0001-6894-6773) | [Research Gate](https://www.researchgate.net/profile/Joao-Paulo-Alencar)
 
-Ph.D in Ecology at USP
-
-Post-Doc at:
-Laboratório de Evolução e Diversidade I  - "LED 1" - Centro de Ciências Naturais e Humanas, Universidade Federal do ABC, São Bernardo do Campo, SP – Brazil
